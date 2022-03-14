@@ -1,8 +1,0 @@
-[config]
-playerCount = 100
-maxThreads = 1
-headless = True
-actId = 573f53ac-41a5-3a7d-d9ce-d6a6298e5704
-bucket = valorant-scraper
-folder = top-players
-filename = top100players
