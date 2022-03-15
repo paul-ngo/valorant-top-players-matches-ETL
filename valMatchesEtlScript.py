@@ -1,18 +1,19 @@
 import valMatchesEtlLibs as m
-import s3fs
 from connectRds import queryRds, insertRds
 import pandas as pd
 
-query1 = """select player_id, player_name
-                from test_top_players, (SELECT max(date_added) as latest FROM test_top_players) as t
-                where t.latest = test_top_players.date_added
-                order by player_rank"""
+query1 = """
+    SELECT player_id, player_name 
+    FROM top_players 
+    WHERE latest_data = 1
+"""
 dfPlayerList = pd.DataFrame(queryRds(query1), columns=['player_id', 'player_name'])
 
 dfMatchesId = m.scrapeMatchesHistory(dfPlayerList['player_id'], dfPlayerList['player_name'])
+dfMatchesId = dfMatchesId.drop_duplicates(subset=['MATCH_ID'])
 
 query2 = """
-    SELECT match_id b
+    SELECT match_id
     FROM matches
 """
 dfExistingMatches = pd.DataFrame(queryRds(query2), columns=['match_id'])
