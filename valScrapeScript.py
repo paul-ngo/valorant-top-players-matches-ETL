@@ -1,26 +1,16 @@
 import valScraperLibs as v
-import s3fs
-import os
-from datetime import datetime
-import pandas as pd
-import configparser
+from connectRds import updateRds, insertRds
 
-parser = configparser.ConfigParser()
-parser.read("valscraper_config.txt")
+dfPlayerList = v.scrapePlayers()
+dfPlayerList = dfPlayerList.drop_duplicates(subset=['player_id'])
+update1 = """
+    UPDATE top_players SET latest_data = 0 WHERE latest_data = 1;
+"""
+updateRds(update1)
 
-playerCount = int(parser.get('config', 'playerCount'))
-maxThreads = int(parser.get('config', 'maxThreads'))
-headless = parser.get('config', 'headless')
-actId = parser.get('config', 'actId')
+insert1 = """
+    INSERT INTO top_players (player_id, player_rank, player_name, act_id, datetime_added, latest_data) VALUES (%s, %s, %s, %s, %s, %s)
+"""
+val1 = list(dfPlayerList.itertuples(index=False, name=None))
+insertRds(insert1, val1)
 
-dfPlayerList = v.scrapePlayers(actId, playerCount, maxThreads, headless)
-
-bPlayerList = dfPlayerList.to_csv(None, index=False).encode()
-
-fs = s3fs.S3FileSystem()
-bucket = parser.get('config', 'bucket')
-folder = parser.get('config', 'folder')
-filename = parser.get('config', 'filename')
-
-with fs.open('s3://{}/{}/{}.csv'.format(bucket, folder, filename), 'wb') as f:
-    f.write(bPlayerList)

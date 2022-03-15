@@ -4,15 +4,23 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 import time
 import datetime
 import concurrent.futures
 import threading
-from statsmodels.stats.weightstats import ztest as ztest
 import math
 import requests
+import configparser
+
+parser = configparser.ConfigParser()
+parser.read("config.ini")
+config = 'default'
+
+playerCount = int(parser.get(config, 'playerCount'))
+maxThreads = int(parser.get(config, 'maxThreads'))
+headless = parser.get(config, 'headless')
+actId = parser.get(config, 'actId')
 
 class Timer(object):
     def __init__(self, name=None):
@@ -49,11 +57,10 @@ def get_driver(threadLocal, headless=True):
 timeout = 3
 
 def getTopPlayers(args):
-    actId = args[0]
-    pages = args[1]
-    n = args[2]
-    threadLocal = args[3]
-    headless = args[4]
+    pages = args[0]
+    n = args[1]
+    threadLocal = args[2]
+    
     driver = get_driver(threadLocal, headless)
     arrPlayers = []
     arrRanks = []
@@ -107,7 +114,7 @@ def getTopPlayers(args):
     del threadLocal
     return arrPlayerNames, arrPlayerRanks, arrPlayerIds
 
-def scrapePlayers(actId, playerCount, maxThreads, headless):
+def scrapePlayers():
     pageCount = math.ceil(playerCount/10)
     n = math.ceil(pageCount/maxThreads)
 
@@ -117,7 +124,7 @@ def scrapePlayers(actId, playerCount, maxThreads, headless):
     
     with Timer('Leaderboard Scrape:'):
 
-        args = [(actId, n*i, n, threading.local(), headless) for i in range(1, maxThreads+1)]
+        args = [(n*i, n, threading.local()) for i in range(1, maxThreads+1)]
         with concurrent.futures.ThreadPoolExecutor(max_workers=maxThreads) as executor:
             results = executor.map(getTopPlayers, args)
 
@@ -128,8 +135,9 @@ def scrapePlayers(actId, playerCount, maxThreads, headless):
                 
             dfPlayerList = pd.DataFrame(data=[arrPlayerIds, arrPlayerRanks, arrPlayerNames]).T
             dfPlayerList.columns = ['player_id', 'player_rank', 'player_name']
+            dfPlayerList['act_id'] = actId
             dfPlayerList['date_added'] = datetime.datetime.now()#.strftime("%Y-%m-%d %H:%M:%S")
             dfPlayerList['latest_data'] = True
-            
+
     return dfPlayerList
   
