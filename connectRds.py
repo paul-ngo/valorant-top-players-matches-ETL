@@ -20,19 +20,33 @@ def queryRds(query: str) -> tuple:
             cur = connection.cursor()
             cur.execute(query)
             results = cur.fetchall()
-    except:
-        print('Failed query.')
-    return results
+            
+        return results
+    
+    except Exception as e:
+        print(e)
+
 
 
 def insertRds(statement: str, val: list):
-    with connectRds() as connection:
-        cur = connection.cursor()
-       
         try:
-            cur.executemany(statement, val)
-            connection.commit()
-            print(str(cur.rowcount) + ' rows inserted.')
+            with connectRds() as connection:
+                cur = connection.cursor()
+                cur.executemany(statement, val)
+                connection.commit()
+            print(str(cur.rowcount) + ' records inserted.')
+            
         except Exception as e:
-            print(e) #'Failed insert.'
+            print(e)
+            
+def updateRds(statement: str):
+    try:
+        with connectRds() as connection:
+            cur = connection.cursor()
+            cur.execute(statement)
+            connection.commit()
+        print(str(cur.rowcount) + 'records updated.')
+    except Exception as e:
+        print(e)
+
             
