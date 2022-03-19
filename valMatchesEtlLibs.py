@@ -6,6 +6,11 @@ import requests
 import json
 import math
 import configparser
+from dateutil import parser as dateparser
+
+# combine match and match_details tables?
+# add date_added datetimes for matches and match_details
+# add match datetimes for match_details
 
 parser = configparser.ConfigParser()
 parser.read("config.ini")
@@ -53,12 +58,13 @@ def getPlayerMatches(args):
                     break
                 
                 matchesData = r.json()
-                parsedData = [(match['matchId'], actId, match['queue'].upper()) for match in matchesData]
-                dfMatchId = pd.DataFrame(data = parsedData, columns = ['MATCH_ID', 'ACT_ID', 'MODE'])
-                dfMatchId['MATCH_URL'] = 'https://blitz.gg/valorant/match/' + playerName + '/' + actId + '/' + dfMatchId['MATCH_ID']
+                parsedData = [(match['matchId'], actId, match['queue'].upper(), dateparser.parse(match['matchDate'], ignoretz=True)) for match in matchesData]
+                dfMatchId = pd.DataFrame(data = parsedData, columns = ['match_id', 'act_id', 'mode', 'match_date'])
+                dfMatchId['match_url'] = 'https://blitz.gg/valorant/match/' + playerName + '/' + actId + '/' + dfMatchId['match_id']
                 dfMatchesIds = pd.concat([dfMatchesIds, dfMatchId])
-            except:
+            except Exception as e:
                 print('Error with the request to: ' + url)
+                # print(e)
                 continue
             
     return dfMatchesIds
@@ -67,7 +73,7 @@ def getMatchTeams(args):
     matchesIds = args
     dfMatchesDetails = pd.DataFrame()
     for matchId in matchesIds:
-        url = 'https://valorant.iesdev.com/match/' + matchId #+ '?type=puuid&actId=' + actId
+        url = 'https://valorant.iesdev.com/match/' + matchId
         r = requests.get(url)
         
         if r.status_code == 404:
@@ -114,8 +120,8 @@ def scrapeMatchesHistory(arrPlayerIds, arrPlayerNames):
                 for result in results:
                     dfMatchesIds = pd.concat([dfMatchesIds, result])
                 
-                dfMatchesIds = dfMatchesIds[dfMatchesIds['MODE']=='COMPETITIVE']
-                dfMatchesIds = dfMatchesIds.drop_duplicates(['MATCH_ID'])
+                dfMatchesIds = dfMatchesIds[dfMatchesIds['mode']=='COMPETITIVE']
+                dfMatchesIds = dfMatchesIds.drop_duplicates(['match_id'])
                 dfMatchesIds = dfMatchesIds.reset_index(drop=True)
                 return dfMatchesIds
             
