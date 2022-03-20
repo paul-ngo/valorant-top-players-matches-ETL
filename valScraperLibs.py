@@ -20,7 +20,7 @@ config = 'default'
 playerCount = int(parser.get(config, 'playerCount'))
 maxThreads = int(parser.get(config, 'maxThreads'))
 headless = parser.get(config, 'headless')
-actId = parser.get(config, 'actId')
+# actId = parser.get(config, 'actId')
 
 class Timer(object):
     def __init__(self, name=None):
@@ -65,9 +65,9 @@ def getTopPlayers(args):
     arrPlayers = []
     arrRanks = []
     for page in range(pages-n, pages):
-        url = "https://playvalorant.com/en-us/leaderboards/?page=" + str(page+1) + "&act=" + actId
+        url = "https://playvalorant.com/en-us/leaderboards/?page=" + str(page+1)  
         driver.get(url)
-
+        
         playerTileAttr = "LeaderboardsItem-module--playerName--2BYaw"
         playerRankAttr = "LeaderboardsItem-module--leaderboardRank--3DHty"
         
@@ -81,7 +81,10 @@ def getTopPlayers(args):
             except:
                 print('Error encountered on page ' + str(page))
                 continue
-
+            
+        actIdRev = driver.current_url[::-1]
+        actId = actIdRev[0:(actIdRev.find('='))][::-1]
+            
         html = driver.page_source
         soup = BeautifulSoup(html, 'html.parser')   
 
@@ -112,7 +115,7 @@ def getTopPlayers(args):
     
     
     del threadLocal
-    return arrPlayerNames, arrPlayerRanks, arrPlayerIds
+    return arrPlayerNames, arrPlayerRanks, arrPlayerIds, actId
 
 def scrapePlayers():
     pageCount = math.ceil(playerCount/10)
@@ -133,10 +136,12 @@ def scrapePlayers():
                 arrPlayerRanks = np.append(arrPlayerRanks, result[1])    
                 arrPlayerIds = np.append(arrPlayerIds, result[2]) 
                 
+            actId = result[3]
+            
             dfPlayerList = pd.DataFrame(data=[arrPlayerIds, arrPlayerRanks, arrPlayerNames]).T
             dfPlayerList.columns = ['player_id', 'player_rank', 'player_name']
             dfPlayerList['act_id'] = actId
-            dfPlayerList['date_added'] = datetime.datetime.now()#.strftime("%Y-%m-%d %H:%M:%S")
+            dfPlayerList['date_added'] = datetime.datetime.now()
             dfPlayerList['latest_data'] = True
 
     return dfPlayerList

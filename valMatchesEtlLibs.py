@@ -10,14 +10,13 @@ from dateutil import parser as dateparser
 
 # combine match and match_details tables?
 # add date_added datetimes for matches and match_details
-# add match datetimes for match_details
 
 parser = configparser.ConfigParser()
 parser.read("config.ini")
 config = 'default'
 
 maxThreads = int(parser.get(config, 'maxThreads'))
-actId = parser.get(config, 'actId')
+# actId = parser.get(config, 'actId')
 queue = parser.get(config, 'queue')
 maxMatchCount = int(parser.get(config, 'minMatchCount'))
 headless = parser.get(config, 'headless')
@@ -41,10 +40,11 @@ def getPlayerMatches(args):
     
     arrPlayerIds = args[0]
     arrPlayers = args[1]
+    actId = args[2]
     
     dfMatchesIds = pd.DataFrame()
 
-    for (playerId, playerName) in zip(arrPlayerIds, arrPlayers):
+    for (playerId, playerName, actId) in zip(arrPlayerIds, arrPlayers, actId):
         for offset in range(0, maxMatchCount, 20):
             url = 'https://valorant.iesdev.com/matchplayer/' + playerId + '?offset=' + str(offset) + '&queues=' + queue + ',&type=subject&updatedMPs=true&actId=' + actId
             
@@ -73,26 +73,34 @@ def getMatchTeams(args):
     matchesIds = args
     dfMatchesDetails = pd.DataFrame()
     for matchId in matchesIds:
-        url = 'https://valorant.iesdev.com/match/' + matchId
-        r = requests.get(url)
         
-        if r.status_code == 404:
-            continue
-        
-        try:        
-            matchData = r.json()
-
+        try:
+            try: 
+                url = 'https://valorant.iesdev.com/match/' + matchId + '?type=puuid'
+                r = requests.get(url)
+                
+                matchData = r.json()
+                
+            except:
+                url = 'https://valorant.iesdev.com/match/' + matchId
+                r = requests.get(url)
+                
+                matchData = r.json()
+            
+            if r.status_code == 404:
+                print('Response error 404')
+                continue
+            
             arrplayers = matchData['players']
             map_ =  matchData['map'].upper()
             redTeam = []
             blueTeam = []
-             
+            
             for agent in arrplayers:
                 if agent['teamId'] == 'Red':
                     redTeam = np.append(redTeam, dictAgents[agent['characterId']])
                 else:
                     blueTeam = np.append(blueTeam, dictAgents[agent['characterId']])
-                    
             redTeamKey = "-".join((np.sort(redTeam)))
             blueTeamKey = "-".join((np.sort(blueTeam)))
             redTeamScore = matchData['teams'][0]['roundsWon']
@@ -102,16 +110,18 @@ def getMatchTeams(args):
             dfMatchesDetails = pd.concat([dfMatchesDetails, dfMatchDetails])
             
         except Exception as e:
+            # print(e)
             continue
+        
     return dfMatchesDetails  
 
-def scrapeMatchesHistory(arrPlayerIds, arrPlayerNames):
+def scrapeMatchesHistory(arrPlayerIds, arrPlayerNames, actId):
     dfMatchesIds = pd.DataFrame()
     n = math.ceil(len(arrPlayerIds)/maxThreads)
     
     with Timer('Matches scraping'):
         try:
-            args = [(arrPlayerIds[i:i+n], arrPlayerNames[i:i+n]) for i in range(0, len(arrPlayerIds), n)]
+            args = [(arrPlayerIds[i:i+n], arrPlayerNames[i:i+n], actId[i:i+n]) for i in range(0, len(arrPlayerIds), n)]
             
             print('Scraping match history...')
             with concurrent.futures.ThreadPoolExecutor(max_workers=maxThreads) as executor:

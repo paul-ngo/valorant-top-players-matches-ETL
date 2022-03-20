@@ -3,13 +3,13 @@ from connectRds import queryRds, insertRds
 import pandas as pd
 
 query1 = """
-    SELECT player_id, player_name 
+    SELECT player_id, player_name, act_id
     FROM top_players 
     WHERE latest_data = 1
 """
-dfPlayerList = pd.DataFrame(queryRds(query1), columns=['player_id', 'player_name'])
+dfPlayerList = pd.DataFrame(queryRds(query1), columns=['player_id', 'player_name', 'act_id'])
 
-dfMatchesId = m.scrapeMatchesHistory(dfPlayerList['player_id'], dfPlayerList['player_name'])
+dfMatchesId = m.scrapeMatchesHistory(dfPlayerList['player_id'], dfPlayerList['player_name'], dfPlayerList['act_id'])
 dfMatchesId = dfMatchesId.drop_duplicates(subset=['match_id'])
 
 query2 = """
@@ -25,7 +25,6 @@ insert1 = """
 """
 val1 = list(dfMatchesId.itertuples(index=False, name=None))
 insertRds(insert1, val1)
-
 
 dfMatchesDetails = m.scrapeTeams(dfMatchesId['match_id'])
 
