@@ -12,7 +12,7 @@ from dateutil import parser as dateparser
 # add date_added datetimes for matches and match_details
 
 parser = configparser.ConfigParser()
-parser.read("config.ini")
+parser.read('config.ini')
 config = 'default'
 
 maxThreads = int(parser.get(config, 'maxThreads'))
