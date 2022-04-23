@@ -1,3 +1,6 @@
+__pycache__/
 rds.creds
 redshift.creds
 env/
+Archive/
+

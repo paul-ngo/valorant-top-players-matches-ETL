@@ -6,19 +6,21 @@ def connectRedshift():
     parser.read('redshift.creds')
     config = 'redshift'
     iam = True
+    host = parser.get(config, 'host')
     user = parser.get(config, 'user')
+    password = parser.get(config, 'password')    
     database = parser.get(config, 'database')
     cluster_identifier = parser.get(config, 'cluster_identifier')
     profile = parser.get(config, 'profile')
-    
-    connection = dbConn.connect(    
-        iam=True,
-        database='dev',
-        db_user='awsuser',
-        password='',
-        user='',
-        cluster_identifier=cluster_identifier,
-        profile='default'
+
+    connection = dbConn.connect(
+        # iam=True,
+        # profile='default'
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+        cluster_identifier=cluster_identifier
         )
 
     return connection
