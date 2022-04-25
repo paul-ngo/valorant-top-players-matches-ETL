@@ -1,5 +1,4 @@
 import valTopPlayersScraperLibs as v
-# from connectRds import updateRds, insertRds
 from connectRedshift import updateRedshift, insertRedshift
 
 dfPlayerList = v.scrapePlayers()

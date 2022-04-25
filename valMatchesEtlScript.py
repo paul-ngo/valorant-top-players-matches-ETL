@@ -1,5 +1,4 @@
 import valMatchesEtlLibs as m
-# from connectRds import queryRds, insertRds
 from connectRedshift import queryRedshift, insertRedshift
 import pandas as pd
 
