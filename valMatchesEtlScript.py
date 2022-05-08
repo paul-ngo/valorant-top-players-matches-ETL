@@ -18,18 +18,26 @@ query2 = """
 """
 dfExistingMatches = pd.DataFrame(queryRedshift(query2), columns=['match_id'])
 
-dfMatchesId = dfMatchesId[~dfMatchesId['match_id'].isin(dfExistingMatches['match_id'])]
+dfNewMatchesId = dfMatchesId[~dfMatchesId['match_id'].isin(dfExistingMatches['match_id'])]
+
+query3 = """
+    SELECT match_id
+    FROM matches_details
+"""
+## cross-check match IDs in the matches_details tables incase script failed to retrive match details previously
+dfExistingMatchesDetails = pd.DataFrame(queryRedshift(query3), columns=['match_id'])
+dfNewMatchesWithoutDetails = dfMatchesId[~dfMatchesId['match_id'].isin(dfExistingMatchesDetails['match_id'])]
+
+dfNewMatchesDetails = m.scrapeTeams(dfNewMatchesWithoutDetails['match_id'])
 
 insert1 = """
     INSERT INTO matches (match_id, act_id, mode, match_date, match_url) VALUES (%s, %s, %s, %s, %s)
 """
-val1 = list(dfMatchesId.itertuples(index=False, name=None))
+val1 = list(dfNewMatchesId.itertuples(index=False, name=None))
 insertRedshift(insert1, val1)
-
-dfMatchesDetails = m.scrapeTeams(dfMatchesId['match_id'])
 
 insert2 = """
     INSERT INTO matches_details (match_id, map, red_team, red_team_score, blue_team, blue_team_score) VALUES (%s, %s, %s, %s, %s, %s)
 """
-val2 = list(dfMatchesDetails.itertuples(index=False, name=None))
+val2 = list(dfNewMatchesDetails.itertuples(index=False, name=None))
 insertRedshift(insert2, val2)

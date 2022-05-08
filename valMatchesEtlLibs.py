@@ -16,7 +16,6 @@ parser.read('config.ini')
 config = 'default'
 
 maxThreads = int(parser.get(config, 'maxThreads'))
-# actId = parser.get(config, 'actId')
 queue = parser.get(config, 'queue')
 maxMatchCount = int(parser.get(config, 'minMatchCount'))
 headless = parser.get(config, 'headless')
@@ -110,7 +109,7 @@ def getMatchTeams(args):
             dfMatchesDetails = pd.concat([dfMatchesDetails, dfMatchDetails])
             
         except Exception as e:
-            # print(e)
+            print(e)
             continue
         
     return dfMatchesDetails  
