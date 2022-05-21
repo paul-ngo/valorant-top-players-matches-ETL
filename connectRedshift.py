@@ -11,7 +11,7 @@ def connectRedshift():
     password = parser.get(config, 'password')    
     database = parser.get(config, 'database')
     cluster_identifier = parser.get(config, 'cluster_identifier')
-    profile = parser.get(config, 'profile')
+    # profile = parser.get(config, 'profile')
 
     connection = dbConn.connect(
         # iam=True,

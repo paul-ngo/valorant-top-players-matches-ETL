@@ -1,27 +1,19 @@
-FROM python:latest
-WORKDIR /app
-COPY requirements.txt/ . 
-COPY config.ini/ .
-COPY redshift.creds/ .
-COPY connectRedshift.py/ . 
-COPY valTopPlayersScraperLibs.py/ . 
-COPY valTopPlayersScraperScript.py/ .
+FROM public.ecr.aws/lambda/python:3.8
+# WORKDIR /app
+COPY install-browsers.sh requirements.txt config.ini redshift.creds connectRedshift.py valTopPlayersScraperLibs.py valTopPlayersScraperScript.py ./
 
-# install google chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-RUN apt-get -y update
-RUN apt-get install -y google-chrome-stable
+RUN yum install xz atk cups-libs gtk3 libXcomposite alsa-lib tar \
+    libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
+    libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
+    xorg-x11-xauth dbus-glib dbus-glib-devel unzip bzip2 -y -q
 
-# install chromedriver
-RUN apt-get install -yqq unzip
-RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`/chromedriver_linux64.zip
-RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
-
-# set display port to avoid crash
-ENV DISPLAY=:99
+# Install Browsers
+RUN /usr/bin/bash install-browsers.sh
 
 # install python libraries
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt -q
 
-CMD [ "python", "-m", "valTopPlayersScraperScript"]
+# Remove not needed packages
+RUN yum remove xz tar unzip bzip2 -y
+
+CMD ["valTopPlayersScraperScript.handler"]

@@ -20,7 +20,6 @@ config = 'default'
 playerCount = int(parser.get(config, 'playerCount'))
 maxThreads = int(parser.get(config, 'maxThreads'))
 headless = parser.get(config, 'headless')
-# actId = parser.get(config, 'actId')
 
 class Timer(object):
     def __init__(self, name=None):
@@ -37,15 +36,17 @@ class Timer(object):
 class Driver():
     def __init__(self, headless):
         options = webdriver.ChromeOptions()
+        options.add_argument("--no-sandbox")
         if headless:
             options.add_argument("--headless")
+        options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
-        options.add_argument('--no-sandbox')
-        options.add_argument('--window-size=1920,1080')
-        options.add_argument('--disable-dev-shm-usage')    
-        prefs = {"profile.managed_default_content_settings.images": 2}
-        options.add_experimental_option("prefs", prefs)
-        self.driver = webdriver.Chrome(options=options)
+        options.add_argument("--disable-dev-tools")
+        options.add_argument("--no-zygote")
+        options.add_argument("--single-process")
+        options.add_argument("window-size=2560x1440")
+        options.binary_location = '/usr/local/bin/chrome'
+        self.driver = webdriver.Chrome(executable_path='/usr/local/bin/chromedriver', options=options)
 
     def __del__(self):
         self.driver.quit()
