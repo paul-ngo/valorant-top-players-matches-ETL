@@ -15,4 +15,4 @@ def handler(event, context):
     val1 = list(dfPlayerList.itertuples(index=False, name=None))
     insertRedshift(insert1, val1)
 
-    return print('Complete')
+    return print('Top players update complete.')
